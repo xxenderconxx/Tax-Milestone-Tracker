@@ -1,0 +1,55 @@
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.metricCard {
+  transition: transform 0.15s ease-in-out;
+}
+
+.metricHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.icon {
+  font-size: 1.25rem;
+}
+
+.label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.value {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  margin: var(--space-1) 0;
+}
+
+.dangerValue {
+  color: var(--danger);
+}
+
+.alertCard {
+  border-color: var(--danger-soft);
+  background-color: var(--paper);
+}
+
+.subtext {
+  font-size: var(--font-size-xs);
+  color: var(--ink-faint);
+}
+
+@media (max-width: 720px) {
+  .metricsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+

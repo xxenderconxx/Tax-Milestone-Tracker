@@ -1,0 +1,31 @@
+.tabContainer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  border-bottom: 2px solid var(--line);
+  margin-bottom: var(--space-6);
+}
+
+.tabBtn {
+  background: none;
+  border: none;
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  color: var(--ink-soft);
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.15s ease-in-out;
+}
+
+.tabBtn:hover {
+  color: var(--ink);
+}
+
+.activeTab {
+  color: var(--teal);
+  font-weight: 600;
+  border-bottom-color: var(--teal);
+}
+

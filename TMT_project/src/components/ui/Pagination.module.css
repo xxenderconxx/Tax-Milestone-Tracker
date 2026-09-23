@@ -1,0 +1,20 @@
+.paginationWrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+
+.pageIndicator {
+  font-size: var(--font-size-sm);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+}
+
+.pageIndicator strong {
+  color: var(--ink);
+}
+

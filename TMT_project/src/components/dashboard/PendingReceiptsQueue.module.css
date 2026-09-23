@@ -1,0 +1,61 @@
+.queueList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.queueRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+
+.itemMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.clientTitle {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.itemTitle {
+  font-size: var(--font-size-sm);
+  color: var(--ink-soft);
+}
+
+.uploader {
+  font-size: var(--font-size-xs);
+  color: var(--ink-faint);
+  font-family: var(--font-mono);
+}
+
+.actionGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.reviewBtn {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--teal);
+}
+
+.reviewBtn:hover {
+  text-decoration: underline;
+}
+
+.empty {
+  padding: var(--space-6);
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: var(--font-size-sm);
+}
+

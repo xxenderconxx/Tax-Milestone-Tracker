@@ -1,0 +1,70 @@
+.topNav {
+  height: 60px;
+  background-color: var(--paper);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-6);
+  position: sticky;
+  top: 0;
+  z-index: 80;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.menuToggle {
+  display: none;
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  font-size: 1.2rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.routeTag {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-mono-sm);
+  color: var(--ink-faint);
+  letter-spacing: 1px;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+}
+
+.userRole {
+  font-family: var(--font-mono);
+  color: var(--teal);
+  font-weight: 600;
+}
+
+.userEmail {
+  color: var(--ink-soft);
+}
+
+@media (max-width: 720px) {
+  .menuToggle {
+    display: block;
+  }
+
+  .userEmail {
+    display: none;
+  }
+}
+

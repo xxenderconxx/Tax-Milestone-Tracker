@@ -1,0 +1,142 @@
+.sidebar {
+  width: 240px;
+  background-color: var(--paper);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 100;
+  transition: transform 0.25s ease-in-out;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-4);
+  border-bottom: 1px solid var(--line);
+}
+
+.logoIcon {
+  font-size: 1.75rem;
+}
+
+.brandText {
+  display: flex;
+  flex-direction: column;
+}
+
+.brandTitle {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.brandSub {
+  font-size: var(--font-size-xs);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-2);
+  flex: 1;
+  overflow-y: auto;
+}
+
+.sectionHeader {
+  font-size: var(--font-size-xs);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--ink-faint);
+  padding: var(--space-4) var(--space-3) var(--space-1);
+  letter-spacing: 0.5px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  color: var(--ink-soft);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  transition: all 0.15s ease-in-out;
+}
+
+.navItem:hover {
+  background-color: var(--bg);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.active {
+  background-color: var(--teal-soft) !important;
+  color: var(--teal) !important;
+  font-weight: 600;
+}
+
+.navIcon {
+  font-size: 1.1rem;
+}
+
+.userFooter {
+  padding: var(--space-4);
+  border-top: 1px solid var(--line);
+}
+
+.userBadge {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.userRoleTag {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--teal);
+  background-color: var(--teal-soft);
+  align-self: flex-start;
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-sm);
+}
+
+.userEmail {
+  font-size: var(--font-size-xs);
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.overlay {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .open {
+    transform: translateX(0);
+  }
+
+  .overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 90;
+  }
+}
+

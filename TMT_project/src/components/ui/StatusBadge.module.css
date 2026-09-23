@@ -1,0 +1,43 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sm {
+  font-size: var(--font-size-xs);
+}
+
+.md {
+  font-size: var(--font-size-sm);
+}
+
+.PENDING {
+  background-color: var(--bg);
+  color: var(--ink-soft);
+  border: 1px solid var(--line);
+}
+
+.UNDER_REVIEW {
+  background-color: var(--amber-soft);
+  color: var(--amber);
+  border: 1px solid var(--amber);
+}
+
+.VERIFIED {
+  background-color: var(--teal-soft);
+  color: var(--teal);
+  border: 1px solid var(--teal);
+}
+
+.REJECTED {
+  background-color: var(--danger-soft);
+  color: var(--danger);
+  border: 1px solid var(--danger);
+}
+

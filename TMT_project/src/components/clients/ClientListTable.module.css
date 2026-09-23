@@ -1,0 +1,25 @@
+.nameCell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.clientName {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.businessType {
+  font-size: var(--font-size-xs);
+  color: var(--ink-soft);
+}
+
+.tin {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-mono-sm);
+  color: var(--teal);
+  background-color: var(--teal-soft);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+}
+
