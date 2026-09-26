@@ -5,8 +5,8 @@
 
 -- Insert Initial Users (Admin & Staff)
 INSERT INTO users (id, email, password_hash, role, is_active, email_verified_at) VALUES
-('11111111-1111-1111-1111-111111111111', 'admin@tmtfirm.ph', '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeg6Lruj3vjPGga31lW', 'ADMIN', TRUE, NOW()),
-('22222222-2222-2222-2222-222222222222', 'staff@tmtfirm.ph', '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeg6Lruj3vjPGga31lW', 'STAFF', TRUE, NOW());
+('11111111-1111-1111-1111-111111111111', 'admin@tmtfirm.ph', '$2a$10$LTIse/cbyODWpH7E6mdM0uQ4B7YYUMrYDnW/3ZC2N7UZjQUm2qtAu', 'ADMIN', TRUE, NOW()),
+('22222222-2222-2222-2222-222222222222', 'staff@tmtfirm.ph', '$2a$10$LTIse/cbyODWpH7E6mdM0uQ4B7YYUMrYDnW/3ZC2N7UZjQUm2qtAu', 'STAFF', TRUE, NOW());
 
 -- Insert Sample Philippine Clients
 INSERT INTO clients (id, name, tin, business_type, is_archived) VALUES

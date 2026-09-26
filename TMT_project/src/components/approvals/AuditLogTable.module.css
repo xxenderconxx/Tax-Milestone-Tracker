@@ -1,0 +1,88 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+}
+
+.title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.timestamp {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.actorCell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.actorEmail {
+  font-weight: 500;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+}
+
+.actorRole {
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+  font-weight: 600;
+}
+
+.actionTag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  font-family: var(--font-mono);
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+}
+
+.APPROVE_RECEIPT {
+  background-color: #def7ec;
+  color: #03543f;
+  border-color: #84e1bc;
+}
+
+.REJECT_RECEIPT {
+  background-color: #fde8e8;
+  color: #9b1c1c;
+  border-color: #f8b4b4;
+}
+
+.UPLOAD_RECEIPT {
+  background-color: #e1effe;
+  color: #1e429f;
+  border-color: #a4cafe;
+}
+
+.typeTag {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.metadata {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  background: var(--color-background);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  max-width: 300px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
