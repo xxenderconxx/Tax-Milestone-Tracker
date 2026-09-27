@@ -171,6 +171,7 @@ export default function ApprovalsPage({ accessToken }) {
               onApprove={handleApprove}
               onReject={handleReject}
               isSubmitting={isSubmitting}
+              accessToken={accessToken}
             />
           </div>
         </div>

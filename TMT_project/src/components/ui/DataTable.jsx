@@ -36,7 +36,11 @@ export default function DataTable({ columns, data, onRowClick, isLoading = false
             >
               {columns.map((col, cIdx) => (
                 <td key={cIdx} style={{ textAlign: col.align || 'left' }}>
-                  {col.render ? col.render(row) : row[col.accessor]}
+                  {typeof col.accessor === 'function'
+                    ? col.accessor(row)
+                    : col.render
+                    ? col.render(row)
+                    : row[col.accessor]}
                 </td>
               ))}
             </tr>

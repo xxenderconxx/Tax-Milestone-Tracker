@@ -4,7 +4,7 @@ import Button from '../ui/Button';
 import StatusBadge from '../ui/StatusBadge';
 import RejectionReasonInput from './RejectionReasonInput';
 
-export default function ReceiptReviewCard({ receipt, onApprove, onReject, isSubmitting }) {
+export default function ReceiptReviewCard({ receipt, onApprove, onReject, isSubmitting, accessToken }) {
   const [showRejectModal, setShowRejectModal] = useState(false);
 
   if (!receipt) {
@@ -16,7 +16,7 @@ export default function ReceiptReviewCard({ receipt, onApprove, onReject, isSubm
     );
   }
 
-  const streamUrl = `/api/receipts/${receipt.id}/stream`;
+  const streamUrl = `/api/receipts/${receipt.id}/stream${accessToken ? `?token=${accessToken}` : ''}`;
   const isPdf = receipt.storage_path?.toLowerCase().endsWith('.pdf');
 
   return (

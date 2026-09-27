@@ -7,6 +7,7 @@ import ClientDirectoryPage from './pages/ClientDirectoryPage';
 import ClientDetailPage from './pages/ClientDetailPage';
 import ApprovalsPage from './pages/ApprovalsPage';
 import SettingsPage from './pages/SettingsPage';
+import RedeemInvitePage from './pages/RedeemInvitePage';
 
 function RequireAuth({ user, children }) {
   if (!user) {
@@ -33,20 +34,23 @@ function RequireAdmin({ user, children }) {
 export default function App() {
   const [user, setUser] = useState(null);
   const [accessToken, setAccessToken] = useState('');
+
   const [isInitializing, setIsInitializing] = useState(true);
 
-  // Check auth session on load via refresh token cookie
+  // Check auth session on load via refresh token cookie & local storage
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await fetch('/api/auth/refresh', { method: 'POST' });
+        const res = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' });
         if (res.ok) {
           const data = await res.json();
           setAccessToken(data.accessToken);
           setUser(data.user);
         }
       } catch (err) {
-        console.log('No active session.');
+        console.log('Refresh check failed.');
+        setUser(null);
+        setAccessToken('');
       } finally {
         setIsInitializing(false);
       }
@@ -62,7 +66,7 @@ export default function App() {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
     } catch (err) {
       console.error('Logout error:', err);
     } finally {
@@ -95,6 +99,8 @@ export default function App() {
             user ? <Navigate to="/" replace /> : <LoginPage onLoginSuccess={handleLoginSuccess} />
           }
         />
+
+        <Route path="/redeem-invite" element={<RedeemInvitePage />} />
 
         <Route
           path="/"

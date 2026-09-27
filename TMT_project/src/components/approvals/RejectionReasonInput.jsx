@@ -17,7 +17,7 @@ export default function RejectionReasonInput({ onClose, onSubmit, isSubmitting }
   };
 
   return (
-    <Modal title="Reject Receipt Submission" onClose={onClose}>
+    <Modal isOpen={true} title="Reject Receipt Submission" onClose={onClose}>
       <form onSubmit={handleSubmit} className={styles.form}>
         <p className={styles.description}>
           State the reason why this proof of payment is being rejected. This feedback will be recorded in the audit trail.

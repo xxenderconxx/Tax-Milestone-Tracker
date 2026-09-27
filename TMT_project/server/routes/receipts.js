@@ -36,8 +36,13 @@ router.use(requireAuth);
 async function validateFileType(filePath) {
   try {
     const fileType = await import('file-type');
+    const fn = fileType.fromBuffer || (fileType.default && fileType.default.fromBuffer) || fileType.fileTypeFromBuffer || (fileType.default && fileType.default.fileTypeFromBuffer);
+    if (!fn) {
+      console.error('file-type fromBuffer function could not be resolved');
+      return null;
+    }
     const buffer = fs.readFileSync(filePath);
-    const result = await fileType.fileTypeFromBuffer(buffer);
+    const result = await fn(buffer);
     return result; // returns { ext, mime } or undefined
   } catch (err) {
     console.error('Magic byte validation error:', err);
@@ -77,6 +82,40 @@ router.post('/', upload.single('receipt'), async (req, res, next) => {
     const client = await db.getClient();
     try {
       await client.query('BEGIN');
+
+      let existingReceiptRes;
+
+      if (taxObligationId) {
+        existingReceiptRes = await client.query(
+          `SELECT id
+          FROM receipts
+          WHERE tax_obligation_id = $1
+            AND status IN ('PENDING', 'UNDER_REVIEW')
+          LIMIT 1`,
+          [taxObligationId]
+        );
+      } else {
+        existingReceiptRes = await client.query(
+          `SELECT id
+          FROM receipts
+          WHERE milestone_id = $1
+            AND status IN ('PENDING', 'UNDER_REVIEW')
+          LIMIT 1`,
+          [milestoneId]
+        );
+      }
+
+      if (existingReceiptRes.rows.length > 0) {
+        await client.query('ROLLBACK');
+
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+
+        return res.status(409).json({
+          error: 'This item already has a receipt pending review.'
+        });
+      }
 
       const receiptRes = await client.query(
         `INSERT INTO receipts (tax_obligation_id, milestone_id, storage_path, status, uploaded_by)
@@ -156,17 +195,17 @@ router.get('/pending/queue', requireAdmin, async (req, res, next) => {
   try {
     const result = await db.query(
       `SELECT r.id, r.tax_obligation_id, r.milestone_id, r.storage_path, r.status, r.created_at,
-              u.email as uploaded_by_email,
+              COALESCE(u.email, 'Unknown User') as uploaded_by_email,
               COALESCE(t.tax_type, m.title) as item_title,
               COALESCE(t.amount, m.amount) as amount,
               COALESCE(t.due_date, m.due_date) as due_date,
               c.name as client_name, c.tin as client_tin
        FROM receipts r
-       JOIN users u ON r.uploaded_by = u.id
+       LEFT JOIN users u ON r.uploaded_by = u.id
        LEFT JOIN tax_obligations t ON r.tax_obligation_id = t.id
        LEFT JOIN payment_milestones m ON r.milestone_id = m.id
        LEFT JOIN clients c ON c.id = COALESCE(t.client_id, m.client_id)
-       WHERE r.status = 'PENDING'
+       WHERE r.status IN ('PENDING', 'UNDER_REVIEW')
        ORDER BY r.created_at ASC`
     );
 

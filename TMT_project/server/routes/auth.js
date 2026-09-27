@@ -115,7 +115,14 @@ router.post('/refresh', async (req, res, next) => {
 
     setRefreshTokenCookie(res, newRefreshToken);
 
-    return res.json({ accessToken: newAccessToken });
+    return res.json({
+      accessToken: newAccessToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role
+        }
+    });
   } catch (err) {
     next(err);
   }

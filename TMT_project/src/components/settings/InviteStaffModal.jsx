@@ -19,7 +19,7 @@ export default function InviteStaffModal({ onClose, onSubmit, isSubmitting }) {
   };
 
   return (
-    <Modal title="Invite New Team Member" onClose={onClose}>
+    <Modal isOpen={true} title="Invite New Team Member" onClose={onClose}>
       <form onSubmit={handleSubmit} className={styles.form}>
         <p className={styles.subtitle}>
           Generate an invitation token for a new accounting staff member or administrator.

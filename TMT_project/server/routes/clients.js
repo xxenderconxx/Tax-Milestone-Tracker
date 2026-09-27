@@ -58,25 +58,45 @@ router.get('/:id', async (req, res, next) => {
 
     // Fetch tax obligations
     const obligationsResult = await db.query(
-      `SELECT t.*, 
-              (t.due_date < CURRENT_DATE AND t.status != 'VERIFIED') AS is_overdue,
-              r.id AS receipt_id, r.storage_path AS receipt_path, r.status AS receipt_status, r.rejection_reason
-       FROM tax_obligations t
-       LEFT JOIN receipts r ON r.tax_obligation_id = t.id
-       WHERE t.client_id = $1
-       ORDER BY t.due_date ASC`,
+      `SELECT t.*,
+          (t.due_date < CURRENT_DATE AND t.status != 'VERIFIED') AS is_overdue,
+          r.id AS receipt_id,
+          r.storage_path AS receipt_path,
+          r.status AS receipt_status,
+          r.rejection_reason,
+          r.created_at AS receipt_created_at
+      FROM tax_obligations t
+      LEFT JOIN LATERAL (
+        SELECT r.*
+        FROM receipts r
+        WHERE r.tax_obligation_id = t.id
+        ORDER BY r.created_at DESC
+        LIMIT 1
+      ) r ON true
+      WHERE t.client_id = $1
+      ORDER BY t.due_date ASC`,
       [id]
     );
 
     // Fetch payment milestones
     const milestonesResult = await db.query(
-      `SELECT m.*, 
-              (m.due_date < CURRENT_DATE AND m.status != 'VERIFIED') AS is_overdue,
-              r.id AS receipt_id, r.storage_path AS receipt_path, r.status AS receipt_status, r.rejection_reason
-       FROM payment_milestones m
-       LEFT JOIN receipts r ON r.milestone_id = m.id
-       WHERE m.client_id = $1
-       ORDER BY m.due_date ASC`,
+      `SELECT m.*,
+          (m.due_date < CURRENT_DATE AND m.status != 'VERIFIED') AS is_overdue,
+          r.id AS receipt_id,
+          r.storage_path AS receipt_path,
+          r.status AS receipt_status,
+          r.rejection_reason,
+          r.created_at AS receipt_created_at
+      FROM payment_milestones m
+      LEFT JOIN LATERAL (
+        SELECT r.*
+        FROM receipts r
+        WHERE r.milestone_id = m.id
+        ORDER BY r.created_at DESC
+        LIMIT 1
+      ) r ON true
+      WHERE m.client_id = $1
+      ORDER BY m.due_date ASC`,
       [id]
     );
 
