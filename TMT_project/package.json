@@ -17,6 +17,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "express-rate-limit": "^8.7.0",
     "file-type": "21.3.2",
     "jsonwebtoken": "^9.0.2",
     "multer": "2.3.0",
@@ -31,6 +32,6 @@
     "@vitejs/plugin-react": "^4.3.0",
     "concurrently": "^8.2.2",
     "nodemon": "^3.1.1",
-    "vite": "^8.3.1"
+    "vite": "^7.3.6"
   }
 }

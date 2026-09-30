@@ -1,3 +1,9 @@
+const {
+  authRateLimiter,
+  loginRateLimiter,
+  sensitiveAuthRateLimiter
+} = require('../middleware/rateLimiter');
+
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
@@ -13,39 +19,127 @@ const {
 } = require('../middleware/auth');
 
 const router = express.Router();
+router.use(authRateLimiter);
 
 // 1. POST /api/auth/login
 router.post('/login', async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required.' });
+    // Normalize email
+    const normalizedEmail = email?.toLowerCase().trim();
+
+    // Validate input
+    if (!normalizedEmail || !password) {
+      return res.status(400).json({
+        error: 'Email and password are required.'
+      });
     }
 
+    // Check recent failed login attempts
+    const attemptResult = await db.query(
+      `SELECT COUNT(*) AS count
+       FROM login_attempts
+       WHERE email = $1
+         AND successful = FALSE
+         AND created_at > NOW() - INTERVAL '15 minutes'`,
+      [normalizedEmail]
+    );
+
+    const failedAttempts = parseInt(attemptResult.rows[0].count, 10);
+
+    // Block account after 5 failed attempts
+    if (failedAttempts >= 5) {
+      return res.status(429).json({
+        error: 'Too many failed login attempts. Please try again later.'
+      });
+    }
+
+    // Find user
     const userResult = await db.query(
-      'SELECT id, email, password_hash, role, is_active FROM users WHERE email = $1',
-      [email.toLowerCase().trim()]
+      'SELECT id, email, password_hash, role, is_active, failed_login_attempts, lockout_until FROM users WHERE email = $1',
+      [normalizedEmail]
     );
 
     const user = userResult.rows[0];
 
+    // Account lockout check
+    if (user.lockout_until && new Date() < user.lockout_until) {
+      return res.status(403).json({ error: 'Account locked due to too many failed attempts. Try again later.' });
+    }
+
+    // Invalid or inactive account
     if (!user || !user.is_active) {
-      return res.status(401).json({ error: 'Invalid email or password.' });
+      await db.query(
+        `INSERT INTO login_attempts
+          (email, ip_address, successful)
+         VALUES ($1, $2, FALSE)`,
+        [normalizedEmail, req.ip]
+      );
+
+      return res.status(401).json({
+        error: 'Invalid email or password.'
+      });
     }
 
+    // Account has no password yet
     if (!user.password_hash) {
-      return res.status(401).json({ error: 'Account is pending invitation redemption.' });
+      await db.query(
+        `INSERT INTO login_attempts
+          (email, ip_address, successful)
+         VALUES ($1, $2, FALSE)`,
+        [normalizedEmail, req.ip]
+      );
+
+      return res.status(401).json({
+        error: 'Invalid email or password.'
+      });
     }
 
-    const passwordMatch = await bcrypt.compare(password, user.password_hash);
+    // Check password
+    const passwordMatch = await bcrypt.compare(
+      password,
+      user.password_hash
+    );
+
     if (!passwordMatch) {
-      return res.status(401).json({ error: 'Invalid email or password.' });
+    await db.query(
+      `INSERT INTO login_attempts
+        (email, ip_address, successful)
+       VALUES ($1, $2, FALSE)`,
+      [normalizedEmail, req.ip]
+    );
+    // Increment failed attempts and set lockout if threshold reached (5 attempts -> 15 min)
+    await db.query(
+      `UPDATE users
+       SET failed_login_attempts = failed_login_attempts + 1,
+           lockout_until = CASE
+             WHEN failed_login_attempts + 1 >= 5 THEN NOW() + INTERVAL '15 minutes'
+             ELSE lockout_until
+           END
+       WHERE id = $1`,
+      [user.id]
+    );
+      return res.status(401).json({
+        error: 'Invalid email or password.'
+      });
     }
+
+    // Record successful login
+    await db.query(
+      `INSERT INTO login_attempts
+        (email, ip_address, successful)
+       VALUES ($1, $2, TRUE)`,
+      [normalizedEmail, req.ip]
+    );
 
     // Issue tokens
     const accessToken = generateAccessToken(user);
-    const { token: refreshToken, tokenHash, expiresAt } = generateRefreshToken();
+    const {
+      token: refreshToken,
+      tokenHash,
+      expiresAt
+    } = generateRefreshToken();
 
     // Store refresh token
     await db.query(
@@ -58,7 +152,16 @@ router.post('/login', async (req, res, next) => {
     // Audit log entry
     await db.query(
       'INSERT INTO audit_logs (actor_id, action, target_type, target_id, metadata) VALUES ($1, $2, $3, $4, $5)',
-      [user.id, 'LOGIN', 'USER', user.id, JSON.stringify({ ip: req.ip, userAgent: req.headers['user-agent'] })]
+      [
+        user.id,
+        'LOGIN',
+        'USER',
+        user.id,
+        JSON.stringify({
+          ip: req.ip,
+          userAgent: req.headers['user-agent']
+        })
+      ]
     );
 
     return res.json({
@@ -69,6 +172,7 @@ router.post('/login', async (req, res, next) => {
         role: user.role
       }
     });
+
   } catch (err) {
     next(err);
   }
@@ -168,7 +272,7 @@ router.get('/me', requireAuth, async (req, res, next) => {
 });
 
 // 5. POST /api/auth/forgot-password (Creates a pending password reset request for Admin approval)
-router.post('/forgot-password', async (req, res, next) => {
+router.post('/forgot-password',sensitiveAuthRateLimiter, async (req, res, next) => {
   try {
     const { email } = req.body;
     if (!email) {
@@ -286,7 +390,7 @@ router.patch('/password-resets/:id/reject', requireAuth, requireAdmin, async (re
 });
 
 // 6. POST /api/auth/reset-password
-router.post('/reset-password', async (req, res, next) => {
+router.post('/reset-password',sensitiveAuthRateLimiter, async (req, res, next) => {
   try {
     const { token, newPassword } = req.body;
     if (!token || !newPassword) {
@@ -335,7 +439,7 @@ router.post('/reset-password', async (req, res, next) => {
 });
 
 // 7. POST /api/auth/redeem-invite
-router.post('/redeem-invite', async (req, res, next) => {
+router.post('/redeem-invite',sensitiveAuthRateLimiter, async (req, res, next) => {
   try {
     const { token, password } = req.body;
     if (!token || !password) {

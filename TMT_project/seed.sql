@@ -9,11 +9,11 @@ INSERT INTO users (id, email, password_hash, role, is_active, email_verified_at)
 ('22222222-2222-2222-2222-222222222222', 'staff@tmtfirm.ph', '$2a$10$LTIse/cbyODWpH7E6mdM0uQ4B7YYUMrYDnW/3ZC2N7UZjQUm2qtAu', 'STAFF', TRUE, NOW());
 
 -- Insert Sample Philippine Clients
-INSERT INTO clients (id, name, tin, business_type, is_archived) VALUES
-('a1111111-1111-1111-1111-111111111111', 'Acme Business Solutions Inc.', '008-123-456-0000', 'Corporation', FALSE),
-('a2222222-2222-2222-2222-222222222222', 'Luzon Retail & Logistics Co.', '123-456-789-0001', 'Partnership', FALSE),
-('a3333333-3333-3333-3333-333333333333', 'Maharlika Tech Systems', '987-654-321-0000', 'Sole Proprietorship', FALSE),
-('a4444444-4444-4444-4444-444444444444', 'Legacy Trading Enterprises', '555-444-333-0002', 'Corporation', TRUE);
+INSERT INTO clients (id, name, tin, business_type, approval_status, is_archived) VALUES
+('a1111111-1111-1111-1111-111111111111', 'Acme Business Solutions Inc.', '008-123-456-0000', 'Corporation', 'APPROVED', FALSE),
+('a2222222-2222-2222-2222-222222222222', 'Luzon Retail & Logistics Co.', '123-456-789-0001', 'Partnership', 'APPROVED', FALSE),
+('a3333333-3333-3333-3333-333333333333', 'Maharlika Tech Systems', '987-654-321-0000', 'Sole Proprietorship', 'APPROVED', FALSE),
+('a4444444-4444-4444-4444-444444444444', 'Legacy Trading Enterprises', '555-444-333-0002', 'Corporation', 'APPROVED', TRUE);
 
 -- Insert Sample Tax Obligations
 INSERT INTO tax_obligations (id, client_id, tax_type, due_date, amount, status) VALUES

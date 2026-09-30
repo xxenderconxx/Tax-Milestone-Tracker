@@ -2,6 +2,9 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- Clean up existing tables (reverse dependency order)
+DROP TABLE IF EXISTS login_attempts CASCADE;
+DROP TABLE IF EXISTS password_resets CASCADE;
+DROP TABLE IF EXISTS edit_requests CASCADE;
 DROP TABLE IF EXISTS refresh_tokens CASCADE;
 DROP TABLE IF EXISTS audit_logs CASCADE;
 DROP TABLE IF EXISTS receipts CASCADE;
@@ -28,7 +31,9 @@ CREATE TABLE users (
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     email_verified_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    failed_login_attempts INTEGER NOT NULL DEFAULT 0,
+    lockout_until TIMESTAMPTZ
 );
 
 -- 2. User Invites Table
@@ -48,6 +53,7 @@ CREATE TABLE clients (
     name VARCHAR(255) NOT NULL,
     tin VARCHAR(50) NOT NULL, -- Philippine TIN format: 000-000-000-000
     business_type VARCHAR(100) NOT NULL,
+    approval_status VARCHAR(20) NOT NULL DEFAULT 'APPROVED', -- 'PENDING', 'APPROVED', 'REJECTED'
     is_archived BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -113,7 +119,7 @@ CREATE TABLE refresh_tokens (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 9. Password Resets Table (Pending Admin Approval for Password Resets)
+-- 9. Password Resets Table
 CREATE TABLE password_resets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email VARCHAR(255) NOT NULL,
@@ -121,6 +127,34 @@ CREATE TABLE password_resets (
     reset_token TEXT,
     reset_link TEXT,
     expires_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 10. Login Attempts Table
+CREATE TABLE login_attempts (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    ip_address VARCHAR(255) NOT NULL,
+    successful BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_login_attempts_email_created
+ON login_attempts (email, created_at);
+
+CREATE INDEX idx_login_attempts_ip_created
+ON login_attempts (ip_address, created_at);
+
+-- 11. Edit Requests Table
+CREATE TABLE edit_requests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    target_type VARCHAR(50) NOT NULL, -- e.g. 'CLIENT', 'TAX_OBLIGATION', 'PAYMENT_MILESTONE'
+    target_id UUID NOT NULL,
+    client_id UUID,
+    requested_by UUID NOT NULL REFERENCES users(id),
+    proposed_changes JSONB NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'PENDING', -- 'PENDING', 'APPROVED', 'REJECTED'
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
