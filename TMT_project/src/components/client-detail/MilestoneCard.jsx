@@ -4,8 +4,9 @@ import OverdueBadge from '../ui/OverdueBadge';
 import Button from '../ui/Button';
 import styles from './ItemCard.module.css';
 
-export default function MilestoneCard({ item, onUploadClick }) {
+export default function MilestoneCard({ item, onUploadClick, onEditClick, onDeleteClick, currentUser }) {
   const isVerified = item.status === 'VERIFIED';
+  const isAdmin = currentUser?.role === 'ADMIN';
 
   return (
     <div className={styles.card}>
@@ -34,13 +35,22 @@ export default function MilestoneCard({ item, onUploadClick }) {
         )}
       </div>
 
-      <div className={styles.footer}>
+      <div className={styles.footer} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
         {!isVerified && (
           <Button variant="primary" size="sm" onClick={() => onUploadClick(item, 'milestone')}>
             {item.receipt_id ? 'Re-upload Proof' : 'Upload Proof of Payment'}
           </Button>
         )}
         {isVerified && <span className={styles.verifiedText}>✅ Payment Milestone Cleared</span>}
+
+        <Button variant="outline" size="sm" onClick={() => onEditClick(item)}>
+          ✏️ Edit
+        </Button>
+        {isAdmin && (
+          <Button variant="danger" size="sm" onClick={() => onDeleteClick(item)}>
+            🗑️ Delete
+          </Button>
+        )}
       </div>
     </div>
   );

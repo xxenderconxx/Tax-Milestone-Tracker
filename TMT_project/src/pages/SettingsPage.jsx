@@ -87,6 +87,24 @@ export default function SettingsPage({ accessToken, currentUser }) {
     }
   };
 
+  // Delete a staff user (admin only)
+  const handleDeleteUser = async (userId, email) => {
+    try {
+      const res = await fetch(`/api/users/${userId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Failed to delete user');
+      }
+      setToast({ type: 'success', message: `User "${email}" deleted.` });
+      fetchUsers();
+    } catch (err) {
+      setToast({ type: 'error', message: err.message });
+    }
+  };
+
   return (
     <div className={styles.pageContainer}>
       <header className={styles.header}>
@@ -107,6 +125,7 @@ export default function SettingsPage({ accessToken, currentUser }) {
           users={users}
           pendingInvites={pendingInvites}
           onToggleStatus={handleToggleStatus}
+          onDeleteUser={handleDeleteUser}
           currentUser={currentUser}
         />
       </div>

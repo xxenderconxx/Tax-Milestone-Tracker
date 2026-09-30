@@ -120,5 +120,35 @@ router.patch('/:id/status', async (req, res, next) => {
   }
 });
 
+// 4. DELETE /api/users/:id - Delete Staff Account (Admin only)
+router.delete('/:id', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (id === req.user.id) {
+      return res.status(400).json({ error: 'You cannot delete your own account.' });
+    }
+
+    const userRes = await db.query('SELECT email FROM users WHERE id = $1', [id]);
+    if (userRes.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    const email = userRes.rows[0].email;
+
+    await db.query('UPDATE refresh_tokens SET revoked_at = NOW() WHERE user_id = $1', [id]);
+    await db.query('DELETE FROM users WHERE id = $1', [id]);
+
+    await db.query(
+      'INSERT INTO audit_logs (actor_id, action, target_type, target_id, metadata) VALUES ($1, $2, $3, $4, $5)',
+      [req.user.id, 'DELETE_USER', 'USER', id, JSON.stringify({ email })]
+    );
+
+    return res.json({ message: `User "${email}" deleted successfully.` });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;
 

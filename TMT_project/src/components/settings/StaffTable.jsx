@@ -3,7 +3,7 @@ import styles from './StaffTable.module.css';
 import DataTable from '../ui/DataTable';
 import Button from '../ui/Button';
 
-export default function StaffTable({ users, pendingInvites, onToggleStatus, currentUser }) {
+export default function StaffTable({ users, pendingInvites, onToggleStatus, onDeleteUser, currentUser }) {
   const userColumns = [
     {
       header: 'Email Address',
@@ -43,13 +43,22 @@ export default function StaffTable({ users, pendingInvites, onToggleStatus, curr
       accessor: (row) => {
         if (row.id === currentUser?.id) return <span className={styles.na}>—</span>;
         return (
-          <Button
-            variant={row.is_active ? 'danger' : 'outline'}
-            size="small"
-            onClick={() => onToggleStatus(row.id, !row.is_active)}
-          >
-            {row.is_active ? 'Deactivate' : 'Reactivate'}
-          </Button>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <Button
+              variant={row.is_active ? 'secondary' : 'outline'}
+              size="small"
+              onClick={() => onToggleStatus(row.id, !row.is_active)}
+            >
+              {row.is_active ? 'Deactivate' : 'Reactivate'}
+            </Button>
+            <Button
+              variant="danger"
+              size="small"
+              onClick={() => onDeleteUser && onDeleteUser(row.id, row.email)}
+            >
+              Delete
+            </Button>
+          </div>
         );
       }
     }

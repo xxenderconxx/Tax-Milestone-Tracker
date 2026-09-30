@@ -11,7 +11,7 @@ import Modal from '../components/ui/Modal';
 import Toast from '../components/ui/Toast';
 import styles from './ClientDetailPage.module.css';
 
-export default function ClientDetailPage({ accessToken }) {
+export default function ClientDetailPage({ accessToken, currentUser }) {
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -36,6 +36,24 @@ export default function ClientDetailPage({ accessToken }) {
   const [newMilestoneDueDate, setNewMilestoneDueDate] = useState('');
   const [newMilestoneAmount, setNewMilestoneAmount] = useState('');
 
+  // Edit Client modal state
+  const [isEditClientOpen, setIsEditClientOpen] = useState(false);
+  const [editClientName, setEditClientName] = useState('');
+  const [editClientTin, setEditClientTin] = useState('');
+  const [editClientBusinessType, setEditClientBusinessType] = useState('');
+
+  // Edit Obligation modal state
+  const [editObligation, setEditObligation] = useState(null);
+  const [editObligationTaxType, setEditObligationTaxType] = useState('');
+  const [editObligationDueDate, setEditObligationDueDate] = useState('');
+  const [editObligationAmount, setEditObligationAmount] = useState('');
+
+  // Edit Milestone modal state
+  const [editMilestone, setEditMilestone] = useState(null);
+  const [editMilestoneTitle, setEditMilestoneTitle] = useState('');
+  const [editMilestoneDueDate, setEditMilestoneDueDate] = useState('');
+  const [editMilestoneAmount, setEditMilestoneAmount] = useState('');
+
   const fetchClientData = async () => {
     setIsLoading(true);
     try {
@@ -56,6 +74,132 @@ export default function ClientDetailPage({ accessToken }) {
     fetchClientData();
   }, [id, accessToken]);
 
+  const openEditClientModal = () => {
+    if (data.client) {
+      setEditClientName(data.client.name);
+      setEditClientTin(data.client.tin);
+      setEditClientBusinessType(data.client.business_type);
+      setIsEditClientOpen(true);
+    }
+  };
+
+  const handleSaveClientEdit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`/api/clients/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({
+          name: editClientName,
+          tin: editClientTin,
+          businessType: editClientBusinessType
+        })
+      });
+      if (!res.ok) throw new Error('Failed to update client info.');
+      const updated = await res.json();
+      setData((prev) => ({ ...prev, client: updated }));
+      setToastMessage('Client profile updated successfully!');
+      setIsEditClientOpen(false);
+    } catch (err) {
+      setToastMessage(`Error: ${err.message}`);
+    }
+  };
+
+  const openEditObligationModal = (item) => {
+    setEditObligation(item);
+    setEditObligationTaxType(item.tax_type);
+    setEditObligationDueDate(item.due_date ? item.due_date.substring(0, 10) : '');
+    setEditObligationAmount(item.amount);
+  };
+
+  const handleSaveObligationEdit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`/api/clients/obligations/${editObligation.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({
+          taxType: editObligationTaxType,
+          dueDate: editObligationDueDate,
+          amount: parseFloat(editObligationAmount)
+        })
+      });
+      if (!res.ok) throw new Error('Failed to update tax obligation.');
+      setToastMessage('Tax obligation updated successfully!');
+      setEditObligation(null);
+      fetchClientData();
+    } catch (err) {
+      setToastMessage(`Error: ${err.message}`);
+    }
+  };
+
+  const handleDeleteObligation = async (item) => {
+    if (!window.confirm(`Are you sure you want to delete obligation "${item.tax_type}"?`)) return;
+    try {
+      const res = await fetch(`/api/clients/obligations/${item.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      if (!res.ok) throw new Error('Failed to delete obligation.');
+      setToastMessage('Tax obligation removed.');
+      fetchClientData();
+    } catch (err) {
+      setToastMessage(`Error: ${err.message}`);
+    }
+  };
+
+  const openEditMilestoneModal = (item) => {
+    setEditMilestone(item);
+    setEditMilestoneTitle(item.title);
+    setEditMilestoneDueDate(item.due_date ? item.due_date.substring(0, 10) : '');
+    setEditMilestoneAmount(item.amount);
+  };
+
+  const handleSaveMilestoneEdit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`/api/clients/milestones/${editMilestone.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`
+        },
+        body: JSON.stringify({
+          title: editMilestoneTitle,
+          dueDate: editMilestoneDueDate,
+          amount: parseFloat(editMilestoneAmount)
+        })
+      });
+      if (!res.ok) throw new Error('Failed to update payment milestone.');
+      setToastMessage('Payment milestone updated successfully!');
+      setEditMilestone(null);
+      fetchClientData();
+    } catch (err) {
+      setToastMessage(`Error: ${err.message}`);
+    }
+  };
+
+  const handleDeleteMilestone = async (item) => {
+    if (!window.confirm(`Are you sure you want to delete milestone "${item.title}"?`)) return;
+    try {
+      const res = await fetch(`/api/clients/milestones/${item.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      if (!res.ok) throw new Error('Failed to delete milestone.');
+      setToastMessage('Payment milestone removed.');
+      fetchClientData();
+    } catch (err) {
+      setToastMessage(`Error: ${err.message}`);
+    }
+  };
+
   const handleArchiveToggle = async () => {
     try {
       const res = await fetch(`/api/clients/${id}/archive`, {
@@ -70,6 +214,54 @@ export default function ClientDetailPage({ accessToken }) {
       const updated = await res.json();
       setData((prev) => ({ ...prev, client: updated }));
       setToastMessage(`Client status changed to ${updated.is_archived ? 'Archived' : 'Active'}.`);
+    } catch (err) {
+      setToastMessage(`Error: ${err.message}`);
+    }
+  };
+
+  const handleRemoveClient = async () => {
+    if (!window.confirm(`Are you sure you want to permanently remove client "${data.client.name}"? This action cannot be undone.`)) {
+      return;
+    }
+    try {
+      const res = await fetch(`/api/clients/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Failed to remove client.');
+      }
+      setToastMessage(`Client "${data.client.name}" removed successfully.`);
+      setTimeout(() => navigate('/clients'), 1000);
+    } catch (err) {
+      setToastMessage(`Error: ${err.message}`);
+    }
+  };
+
+  const handleApproveClient = async () => {
+    try {
+      const res = await fetch(`/api/clients/${id}/approve`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      if (!res.ok) throw new Error('Failed to approve client.');
+      setToastMessage('Client registration approved!');
+      fetchClientData();
+    } catch (err) {
+      setToastMessage(`Error: ${err.message}`);
+    }
+  };
+
+  const handleRejectClient = async () => {
+    try {
+      const res = await fetch(`/api/clients/${id}/reject`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      if (!res.ok) throw new Error('Failed to reject client.');
+      setToastMessage('Client registration rejected.');
+      fetchClientData();
     } catch (err) {
       setToastMessage(`Error: ${err.message}`);
     }
@@ -159,8 +351,13 @@ export default function ClientDetailPage({ accessToken }) {
 
       <ClientHeader
         client={data.client}
+        currentUser={currentUser}
         onArchiveToggle={handleArchiveToggle}
         onExportCSV={handleExportClientCSV}
+        onRemoveClient={handleRemoveClient}
+        onApproveClient={handleApproveClient}
+        onRejectClient={handleRejectClient}
+        onEditClient={openEditClientModal}
       />
 
       <div className={styles.sectionHeader}>
@@ -193,10 +390,13 @@ export default function ClientDetailPage({ accessToken }) {
               <ObligationCard
                 key={item.id}
                 item={item}
+                currentUser={currentUser}
                 onUploadClick={(target, type) => {
                   setUploadItem(target);
                   setUploadType(type);
                 }}
+                onEditClick={openEditObligationModal}
+                onDeleteClick={handleDeleteObligation}
               />
             ))
           )}
@@ -212,10 +412,13 @@ export default function ClientDetailPage({ accessToken }) {
               <MilestoneCard
                 key={item.id}
                 item={item}
+                currentUser={currentUser}
                 onUploadClick={(target, type) => {
                   setUploadItem(target);
                   setUploadType(type);
                 }}
+                onEditClick={openEditMilestoneModal}
+                onDeleteClick={handleDeleteMilestone}
               />
             ))
           )}
@@ -235,6 +438,102 @@ export default function ClientDetailPage({ accessToken }) {
           }}
           accessToken={accessToken}
         />
+      )}
+
+      {/* Edit Client Info Modal */}
+      <Modal isOpen={isEditClientOpen} title="Edit Client Information" onClose={() => setIsEditClientOpen(false)}>
+        <form onSubmit={handleSaveClientEdit} className={styles.modalForm}>
+          <Input
+            label="Business Name"
+            value={editClientName}
+            onChange={(e) => setEditClientName(e.target.value)}
+            required
+          />
+          <Input
+            label="TIN Number"
+            value={editClientTin}
+            onChange={(e) => setEditClientTin(e.target.value)}
+            placeholder="000-000-000-000"
+            required
+          />
+          <Input
+            label="Business Entity Type"
+            value={editClientBusinessType}
+            onChange={(e) => setEditClientBusinessType(e.target.value)}
+            placeholder="Sole Proprietorship / Corporation"
+            required
+          />
+          <div className={styles.modalActions}>
+            <Button type="button" variant="secondary" onClick={() => setIsEditClientOpen(false)}>Cancel</Button>
+            <Button type="submit" variant="primary">Update Client Info</Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Edit Obligation Modal */}
+      {editObligation && (
+        <Modal isOpen={Boolean(editObligation)} title="Edit Tax Obligation" onClose={() => setEditObligation(null)}>
+          <form onSubmit={handleSaveObligationEdit} className={styles.modalForm}>
+            <Input
+              label="Tax Type / BIR Form"
+              value={editObligationTaxType}
+              onChange={(e) => setEditObligationTaxType(e.target.value)}
+              required
+            />
+            <Input
+              label="Due Date"
+              type="date"
+              value={editObligationDueDate}
+              onChange={(e) => setEditObligationDueDate(e.target.value)}
+              required
+            />
+            <Input
+              label="Amount (PHP ₱)"
+              type="number"
+              step="0.01"
+              value={editObligationAmount}
+              onChange={(e) => setEditObligationAmount(e.target.value)}
+              required
+            />
+            <div className={styles.modalActions}>
+              <Button type="button" variant="secondary" onClick={() => setEditObligation(null)}>Cancel</Button>
+              <Button type="submit" variant="primary">Update Obligation</Button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* Edit Milestone Modal */}
+      {editMilestone && (
+        <Modal isOpen={Boolean(editMilestone)} title="Edit Payment Milestone" onClose={() => setEditMilestone(null)}>
+          <form onSubmit={handleSaveMilestoneEdit} className={styles.modalForm}>
+            <Input
+              label="Milestone Title"
+              value={editMilestoneTitle}
+              onChange={(e) => setEditMilestoneTitle(e.target.value)}
+              required
+            />
+            <Input
+              label="Due Date"
+              type="date"
+              value={editMilestoneDueDate}
+              onChange={(e) => setEditMilestoneDueDate(e.target.value)}
+              required
+            />
+            <Input
+              label="Amount (PHP ₱)"
+              type="number"
+              step="0.01"
+              value={editMilestoneAmount}
+              onChange={(e) => setEditMilestoneAmount(e.target.value)}
+              required
+            />
+            <div className={styles.modalActions}>
+              <Button type="button" variant="secondary" onClick={() => setEditMilestone(null)}>Cancel</Button>
+              <Button type="submit" variant="primary">Update Milestone</Button>
+            </div>
+          </form>
+        </Modal>
       )}
 
       {/* Add Obligation Modal */}

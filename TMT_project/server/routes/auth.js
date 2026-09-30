@@ -8,7 +8,8 @@ const {
   hashToken,
   setRefreshTokenCookie,
   clearRefreshTokenCookie,
-  requireAuth
+  requireAuth,
+  requireAdmin
 } = require('../middleware/auth');
 
 const router = express.Router();
@@ -166,7 +167,7 @@ router.get('/me', requireAuth, async (req, res, next) => {
   }
 });
 
-// 5. POST /api/auth/forgot-password
+// 5. POST /api/auth/forgot-password (Creates a pending password reset request for Admin approval)
 router.post('/forgot-password', async (req, res, next) => {
   try {
     const { email } = req.body;
@@ -174,27 +175,111 @@ router.post('/forgot-password', async (req, res, next) => {
       return res.status(400).json({ error: 'Email is required.' });
     }
 
-    const userResult = await db.query('SELECT id, role FROM users WHERE email = $1', [email.toLowerCase().trim()]);
+    const cleanEmail = email.toLowerCase().trim();
+    const userResult = await db.query('SELECT id, role FROM users WHERE email = $1 AND is_active = TRUE', [cleanEmail]);
     const user = userResult.rows[0];
 
-    // Always respond with success to prevent user enumeration
     if (user) {
-      const resetToken = crypto.randomBytes(32).toString('hex');
-      const tokenHash = hashToken(resetToken);
-      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-
+      // Create pending password reset request
       await db.query(
-        'INSERT INTO user_invites (email, token_hash, role, expires_at) VALUES ($1, $2, $3, $4)',
-        [email.toLowerCase().trim(), tokenHash, user.role, expiresAt]
+        `INSERT INTO password_resets (email, status)
+         VALUES ($1, 'PENDING')`,
+        [cleanEmail]
       );
 
-      console.log(`\n========================================`);
-      console.log(`[LOCAL DEV] Password Reset Token for ${email}:`);
-      console.log(`TOKEN: ${resetToken}`);
-      console.log(`========================================\n`);
+      await db.query(
+        'INSERT INTO audit_logs (actor_id, action, target_type, target_id, metadata) VALUES ($1, $2, $3, $4, $5)',
+        [user.id, 'REQUEST_PASSWORD_RESET', 'USER', user.id, JSON.stringify({ email: cleanEmail })]
+      );
     }
 
-    return res.json({ message: 'If that email exists in our system, reset instructions have been generated.' });
+    return res.json({ message: 'If that account exists, a password reset request has been submitted to the Admin for approval.' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 5b. GET /api/auth/password-resets/pending - List pending password resets (Admin only)
+router.get('/password-resets/pending', requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    const result = await db.query(
+      `SELECT id, email, status, reset_link, created_at
+       FROM password_resets
+       WHERE status = 'PENDING'
+       ORDER BY created_at ASC`
+    );
+    return res.json(result.rows);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 5c. PATCH /api/auth/password-resets/:id/approve - Approve password reset & generate reset link (Admin only)
+router.patch('/password-resets/:id/approve', requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const reqResult = await db.query('SELECT * FROM password_resets WHERE id = $1 AND status = \'PENDING\'', [id]);
+    if (reqResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Pending password reset request not found.' });
+    }
+
+    const resetReq = reqResult.rows[0];
+
+    const userResult = await db.query('SELECT role FROM users WHERE email = $1', [resetReq.email]);
+    const userRole = userResult.rows[0]?.role || 'STAFF';
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = hashToken(resetToken);
+    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000); // 48 hours
+
+    // Insert into user_invites so user can redeem via token
+    await db.query(
+      'INSERT INTO user_invites (email, token_hash, role, expires_at) VALUES ($1, $2, $3, $4)',
+      [resetReq.email, tokenHash, userRole, expiresAt]
+    );
+
+    const resetLink = `http://localhost:5173/redeem-invite?token=${resetToken}`;
+
+    await db.query(
+      `UPDATE password_resets
+       SET status = 'APPROVED', reset_token = $1, reset_link = $2, updated_at = NOW()
+       WHERE id = $3`,
+      [resetToken, resetLink, id]
+    );
+
+    await db.query(
+      'INSERT INTO audit_logs (actor_id, action, target_type, target_id, metadata) VALUES ($1, $2, $3, $4, $5)',
+      [req.user.id, 'APPROVE_PASSWORD_RESET', 'PASSWORD_RESET', id, JSON.stringify({ email: resetReq.email, resetLink })]
+    );
+
+    return res.json({
+      message: 'Password reset approved! Send the generated reset link manually to the staff member.',
+      resetLink
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 5d. PATCH /api/auth/password-resets/:id/reject - Reject password reset request (Admin only)
+router.patch('/password-resets/:id/reject', requireAuth, requireAdmin, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const reqResult = await db.query('SELECT * FROM password_resets WHERE id = $1 AND status = \'PENDING\'', [id]);
+    if (reqResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Pending password reset request not found.' });
+    }
+
+    await db.query('UPDATE password_resets SET status = \'REJECTED\', updated_at = NOW() WHERE id = $1', [id]);
+
+    await db.query(
+      'INSERT INTO audit_logs (actor_id, action, target_type, target_id, metadata) VALUES ($1, $2, $3, $4, $5)',
+      [req.user.id, 'REJECT_PASSWORD_RESET', 'PASSWORD_RESET', id, JSON.stringify({ email: reqResult.rows[0].email })]
+    );
+
+    return res.json({ message: 'Password reset request rejected.' });
   } catch (err) {
     next(err);
   }

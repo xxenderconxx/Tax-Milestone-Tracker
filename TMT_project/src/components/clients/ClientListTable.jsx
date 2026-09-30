@@ -22,13 +22,19 @@ export default function ClientListTable({ clients = [], isLoading, onClientClick
     },
     {
       header: 'Status',
-      accessor: 'is_archived',
-      render: (client) => (
-        <StatusBadge
-          status={client.is_archived ? 'REJECTED' : 'VERIFIED'}
-          size="sm"
-        />
-      )
+      accessor: 'approval_status',
+      render: (client) => {
+        if (client.is_archived) {
+          return <StatusBadge status="REJECTED" label="Archived" size="sm" />;
+        }
+        if (client.approval_status === 'PENDING') {
+          return <StatusBadge status="UNDER_REVIEW" label="Pending Approval" size="sm" />;
+        }
+        if (client.approval_status === 'REJECTED') {
+          return <StatusBadge status="REJECTED" label="Rejected" size="sm" />;
+        }
+        return <StatusBadge status="VERIFIED" label="Active" size="sm" />;
+      }
     },
     {
       header: 'Created Date',

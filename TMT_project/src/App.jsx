@@ -129,7 +129,7 @@ export default function App() {
           element={
             <RequireAuth user={user}>
               <AppShell user={user} onLogout={handleLogout}>
-                <ClientDetailPage accessToken={accessToken} />
+                <ClientDetailPage accessToken={accessToken} currentUser={user} />
               </AppShell>
             </RequireAuth>
           }
