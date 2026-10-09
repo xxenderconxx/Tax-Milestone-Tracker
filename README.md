@@ -8,6 +8,14 @@ The Tax & Milestone Tracker (TMT) is a full‑stack web application that enables
 - **Dashboard** with metrics, deadline alerts, and CSV exports.
 - **Approvals & Settings** workspaces (to be implemented next).
 
+## Screenshots of screens
+![TMT Login](./screenshots/login.png)
+![TMT Staff screen](./screenshots/staff_screen.png)
+![TMT Upload receipt](./screenshots/staff_upload.png)
+![TMT Add Tax obligation](./screenshots/Tax_obligation.png)
+![TMT Admin approval](./screenshots/admin_approval.png)
+![TMT Staff Invite](./screenshots/Invite_staff.png)
+
 ## Prerequisites
 - **Node.js** >= 20 (tested with v24.18.0)
 - **npm** (comes with Node)
